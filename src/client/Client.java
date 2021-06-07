@@ -1,12 +1,15 @@
 package client;
 
+import comunication.Message;
+import comunication.TypeOfMessage;
+
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.Scanner;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -18,8 +21,8 @@ import javax.swing.JTextField;
 public class Client {
 	private String serverAddress;
 	private Socket socket;
-	private Scanner in;
-	private PrintWriter out;
+	private ObjectInputStream in;
+	private ObjectOutputStream out;
 	private JFrame frame = new JFrame("Chat");
 	private JTextField textField = new JTextField(50);
 	private JTextArea messageArea = new JTextArea(16,50);
@@ -37,7 +40,11 @@ public class Client {
 		textField.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				out.println(textField.getText());
+				try {
+					out.writeObject(new Message(textField.getText()));
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 				textField.setText("");
 			}
 		});
@@ -45,30 +52,28 @@ public class Client {
 	
 	private String getName() {
 		return JOptionPane
-				.showInputDialog(frame, "Choose a screen name:", "Screen name selection", JOptionPane.PLAIN_MESSAGE);
+				.showInputDialog(frame, "Escolha um nickname:", "Escolha de nickname", JOptionPane.PLAIN_MESSAGE);
 	}
 	
-	private void run() throws IOException {
+	private void run() throws IOException, ClassNotFoundException {
         try {
             socket = new Socket(serverAddress, 59001);
-            // In e Out : funcionam como buffers de entrada e saida
-			// Quando se usa o scanner, se lê o inputStream do Socket
-            in = new Scanner(socket.getInputStream());
-            // Quando se usa o printWriter, se escreve no outputStream do Socket
-            out = new PrintWriter(socket.getOutputStream(), true);
-
-            while (in.hasNextLine()) {
-                var line = in.nextLine();
+            out = new ObjectOutputStream(socket.getOutputStream());
+            in = new ObjectInputStream(socket.getInputStream());
+            
+            while (true) {
+                Message message = (Message)in.readObject();
                 // Pedido do servidor para submeter um nome
-                if (line.startsWith("SUBMITNAME")) {
-                    out.println(getName());
+                if (message.getTipo() == TypeOfMessage.SUBMITNAME) {
+                	String client = getName();
+                    out.writeObject(new Message(client.toCharArray()));
                 // Informação do servidor com cliente aceito
-                } else if (line.startsWith("NAMEACCEPTED")) {
-                    this.frame.setTitle("Chatter - " + line.substring(13));
+                } else if (message.getTipo() == TypeOfMessage.NAMEACCEPTED) {
+                    this.frame.setTitle("Chatter - " + String.valueOf(message.remetente));
                     textField.setEditable(true);
                 // Informacao do servidor com uma nova mensagem 
-                } else if (line.startsWith("MESSAGE")) {
-                    messageArea.append(line.substring(8) + "\n");
+                } else if (message.getTipo() == TypeOfMessage.MESSAGE) {
+                    messageArea.append(String.valueOf(message.remetente) + message.mensagem + "\n");
                 }
             }
         } finally {

@@ -3,28 +3,46 @@ import java.io.Serializable;
 
 public class Message implements Serializable {
 	private static final long serialVersionUID = 1L;
-	public int tipo;
-	public String remetente;
+	public TypeOfMessage tipo;
+	public char[] remetente;
 	public String mensagem;
-	public Message(int tipo, String remetente, String mensagem) {
+	
+	public Message(TypeOfMessage tipo, char[] remetente, String mensagem) {
 		this.tipo = tipo;
 		this.remetente = remetente;
 		this.mensagem = mensagem;
 	}
-	public Message(int tipo, String mensagem) {
+	public Message(TypeOfMessage tipo) {
+		this.tipo = tipo;
+	}
+	public Message(char[] remetente) {
+		this.remetente = remetente;
+	}
+	public Message(String mensagem) {
+		this.mensagem = mensagem;
+	}
+	public Message(TypeOfMessage tipo, char[] remetente) {
+		this.tipo = tipo;
+		this.remetente = remetente;
+	}
+	public Message(TypeOfMessage tipo, String mensagem) {
 		this.tipo = tipo;
 		this.mensagem = mensagem;
 	}
-	public String getRemetente() {
+	public Message(char[] remetente,String mensagem) {
+		this.remetente = remetente;
+		this.mensagem = mensagem;
+	}
+	public char[] getRemetente() {
 		return remetente;
 	}
-	public void setRemetente(String remetente) {
+	public void setRemetente(char[] remetente) {
 		this.remetente = remetente;
 	}
-	public int getTipo() {
+	public TypeOfMessage getTipo() {
 		return tipo;
 	}
-	public void setTipo(int tipo) {
+	public void setTipo(TypeOfMessage tipo) {
 		this.tipo = tipo;
 	}
 	public String getMensagem() {
